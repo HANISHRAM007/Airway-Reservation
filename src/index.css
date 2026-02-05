@@ -1,0 +1,415 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+
+:root {
+  color: #f4f1e8;
+  background-color: #121a21;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+
+  --display: "Playfair Display", "Times New Roman", serif;
+  --bg-0: #0f141b;
+  --bg-1: #1a232c;
+  --panel: rgba(18, 24, 31, 0.92);
+  --panel-strong: rgba(15, 21, 28, 0.96);
+  --panel-border: rgba(233, 198, 120, 0.25);
+  --text: #f4f1e8;
+  --muted: #b0a995;
+  --accent: #e9c678;
+  --accent-2: #f6d58b;
+  --shadow: 0 24px 60px rgba(6, 10, 14, 0.6);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 15% 20%, rgba(60, 70, 84, 0.45), transparent 55%),
+    linear-gradient(160deg, var(--bg-0), var(--bg-1));
+  color: var(--text);
+  font-family: inherit;
+  letter-spacing: 0.005em;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+  position: relative;
+  isolation: isolate;
+}
+
+#root::before,
+#root::after {
+  content: "";
+  position: fixed;
+  inset: -20% -10%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+#root::before {
+  background: radial-gradient(circle at 15% 20%, rgba(233, 198, 120, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(92, 109, 125, 0.3), transparent 40%);
+  filter: blur(14px);
+}
+
+#root::after {
+  background-image: linear-gradient(
+      rgba(233, 198, 120, 0.06) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(233, 198, 120, 0.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.35;
+  mix-blend-mode: screen;
+}
+
+.app-shell {
+  width: min(100%, 980px);
+}
+
+.page {
+  width: 100%;
+  display: grid;
+  gap: 24px;
+}
+
+.panel {
+  background: linear-gradient(140deg, var(--panel-strong), var(--panel));
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  text-align: left;
+  animation: fadeUp 600ms ease both;
+}
+
+.page-header {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  margin: 0;
+}
+
+.title {
+  font-size: clamp(2rem, 3vw, 3rem);
+  margin: 0;
+  letter-spacing: 0.04em;
+  font-family: var(--display);
+  text-transform: none;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  max-width: 520px;
+}
+
+.search-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(233, 198, 120, 0.25);
+  background: rgba(10, 14, 18, 0.75);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input::placeholder {
+  color: rgba(154, 163, 199, 0.65);
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(233, 198, 120, 0.2);
+}
+
+.field select {
+  appearance: none;
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      rgba(233, 236, 255, 0.7) 50%
+    ),
+    linear-gradient(135deg, rgba(233, 236, 255, 0.7) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+}
+
+.primary-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #11161d;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(233, 198, 120, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 45px rgba(233, 198, 120, 0.3);
+}
+
+.primary-btn:focus-visible {
+  outline: 3px solid rgba(233, 198, 120, 0.6);
+  outline-offset: 2px;
+}
+
+.error {
+  margin-top: 12px;
+  color: #ff7aa2;
+}
+
+.chip-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(233, 198, 120, 0.35);
+  background: rgba(55, 64, 72, 0.35);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.flight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.flight-card {
+  background: rgba(14, 18, 23, 0.9);
+  border: 1px solid rgba(233, 198, 120, 0.18);
+  border-radius: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 18px 35px rgba(6, 9, 12, 0.5);
+  animation: fadeUp 500ms ease both;
+  text-align: left;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flight-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(233, 198, 120, 0.4);
+  box-shadow: 0 22px 40px rgba(6, 9, 12, 0.65);
+}
+
+.flight-card:focus-visible {
+  outline: 3px solid rgba(233, 198, 120, 0.6);
+  outline-offset: 2px;
+}
+
+.flight-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flight-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  text-transform: none;
+  letter-spacing: 0.06em;
+  font-family: var(--display);
+}
+
+.flight-card__meta {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.flight-card__price {
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(233, 198, 120, 0.5);
+  background: rgba(233, 198, 120, 0.12);
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flight-card__route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.route-arrow {
+  color: var(--accent);
+}
+
+.flight-card__cta {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+}
+
+.form-section {
+  display: grid;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(233, 198, 120, 0.2);
+}
+
+.form-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.section-title {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-family: var(--display);
+}
+
+.flight-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(233, 198, 120, 0.2);
+  background: rgba(12, 16, 20, 0.7);
+  margin-bottom: 20px;
+}
+
+.summary-label {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.summary-value {
+  margin: 0;
+  font-weight: 600;
+}
+
+.success {
+  margin-top: 16px;
+  color: #6ef7c7;
+}
+
+.empty-state {
+  border: 1px dashed rgba(135, 145, 255, 0.35);
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(10, 14, 34, 0.7);
+  color: var(--muted);
+}
+
+.empty-state h3 {
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) {
+  #root {
+    padding: 32px 16px;
+  }
+
+  .panel {
+    padding: 24px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-btn {
+    width: 100%;
+  }
+
+  .flight-card__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
