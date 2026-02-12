@@ -1,34 +1,17 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
+
+const authRoutes = require("./routes/auth");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Airway Backend Running");
-});
+mongoose.connect("mongodb://127.0.0.1:27017/airway");
 
-app.get("/api/flights", (req, res) => {
-  res.json([
-    {
-      flightNo: "AI-101",
-      from: "DEL",
-      to: "MAA",
-      flightName: "Air India",
-      price: 4500
-    },
-    {
-      flightNo: "IN-202",
-      from: "BLR",
-      to: "BOM",
-      flightName: "IndiGo",
-      price: 3800
-    }
-  ]);
-});
+app.use("/api/auth", authRoutes);
 
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(5000, () =>
+  console.log("Server running on port 5000")
+);
