@@ -13,6 +13,9 @@ mongoose.connect("mongodb://127.0.0.1:27017/airway");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/flights", require("./routes/flight"));
+app.use("/api/booking", require("./routes/booking"));
+app.use("/tickets", express.static("tickets"));
+
 
 app.listen(5000, () =>
   console.log("Server running on port 5000")
