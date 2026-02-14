@@ -5,6 +5,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const generateTicket = require("../utils/generateTicket");
 const User = require("../models/User");
 const sendTicketMail = require("../utils/sendTicketMail");
+const { ensureFlightSeats } = require("../utils/seatMap");
 
 
 const router = express.Router();
@@ -36,8 +37,11 @@ router.post("/create", authMiddleware, async (req, res) => {
     }
 
     // Check seat availability for all flights
-    for (let flight of flights) {
-      if (flight.availableSeats < passengers.length) {
+    for (const flight of flights) {
+      await ensureFlightSeats(flight);
+
+      const availableSeats = flight.seats.filter((seat) => !seat.isBooked).length;
+      if (availableSeats < passengers.length) {
         return res.status(400).json({
           message: `Not enough seats in ${flight.airline}`
         });
@@ -90,8 +94,6 @@ router.post("/pay/:bookingId", authMiddleware, async (req, res) => {
     booking.paymentStatus = "SUCCESS";
     booking.paymentId = "PAY" + Date.now();
 
-    await booking.save();
-
     // Reduce seats AFTER payment success
     if (!Array.isArray(booking.flights) || booking.flights.length === 0) {
       return res.status(400).json({ message: "No flights found for this booking" });
@@ -103,42 +105,76 @@ router.post("/pay/:bookingId", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "One or more flights not found" });
     }
 
-    for (let flight of flights) {
-  for (let passenger of passengers) {
+    const bookingPassengers = Array.isArray(booking.passengers) ? booking.passengers : [];
 
-    const seat = flight.seats.find(
-      s => s.seatNumber === passenger.seatNumber
-    );
+    for (let flightIndex = 0; flightIndex < flights.length; flightIndex += 1) {
+      const flight = flights[flightIndex];
+      await ensureFlightSeats(flight);
 
-    if (!seat) {
-      return res.status(400).json({
-        message: `Seat ${passenger.seatNumber} not found in ${flight.airline}`
-      });
-    }
+      const requestedSeatNumbers = bookingPassengers
+        .map((passenger) => passenger.seatNumber)
+        .filter(Boolean)
+        .map((seatNumber) => String(seatNumber).toUpperCase());
+      const uniqueSeatNumbers = new Set(requestedSeatNumbers);
 
-    if (seat.isBooked) {
-      return res.status(400).json({
-        message: `Seat ${passenger.seatNumber} already booked`
-      });
-    }
-  }
-}
+      if (uniqueSeatNumbers.size !== requestedSeatNumbers.length) {
+        return res.status(400).json({ message: "Duplicate seat selection in booking" });
+      }
 
+      const selectedSeats = [];
+      for (const seatNumber of requestedSeatNumbers) {
+        const seat = flight.seats.find(
+          (item) => String(item.seatNumber).toUpperCase() === seatNumber
+        );
 
-    for (const flight of flights) {
-   for (let passenger of booking.passengers) {
-      const seat = flight.seats.find(
-        s => s.seatNumber === passenger.seatNumber
+        if (!seat) {
+          return res.status(400).json({
+            message: `Seat ${seatNumber} not found in ${flight.airline}`
+          });
+        }
+
+        if (seat.isBooked) {
+          return res.status(400).json({
+            message: `Seat ${seatNumber} already booked`
+          });
+        }
+
+        selectedSeats.push(seat);
+      }
+
+      const freeSeats = flight.seats.filter(
+        (item) =>
+          !item.isBooked &&
+          !uniqueSeatNumbers.has(String(item.seatNumber).toUpperCase())
       );
 
-      if (seat) {
+      if (selectedSeats.length + freeSeats.length < bookingPassengers.length) {
+        return res.status(400).json({
+          message: `Not enough seats in ${flight.airline}`
+        });
+      }
+
+      while (selectedSeats.length < bookingPassengers.length) {
+        selectedSeats.push(freeSeats.shift());
+      }
+
+      if (flightIndex === 0) {
+        for (let i = 0; i < bookingPassengers.length; i += 1) {
+          if (!bookingPassengers[i].seatNumber && selectedSeats[i]) {
+            bookingPassengers[i].seatNumber = selectedSeats[i].seatNumber;
+          }
+        }
+      }
+
+      for (const seat of selectedSeats) {
         seat.isBooked = true;
       }
-    }
-    await flight.save();
 
+      flight.availableSeats = flight.seats.filter((item) => !item.isBooked).length;
       await flight.save();
     }
+
+    await booking.save();
 
     const fileName = await generateTicket(booking, flights[0]);
 
@@ -179,18 +215,23 @@ router.post("/cancel/:bookingId", authMiddleware, async (req, res) => {
       return res.status(400).json({ message: "Payment not completed" });
 
     // Restore seats
-    for (let flight of booking.flights) {
-     for (let passenger of booking.passengers) {
-  const seat = flight.seats.find(
-    s => s.seatNumber === passenger.seatNumber
-  );
+    for (const flight of booking.flights) {
+      await ensureFlightSeats(flight);
 
-  if (seat) {
-    seat.isBooked = false;
-  }
-}
-await flight.save();
+      for (const passenger of booking.passengers) {
+        if (!passenger.seatNumber) continue;
 
+        const normalizedSeatNumber = String(passenger.seatNumber).toUpperCase();
+        const seat = flight.seats.find(
+          (item) => String(item.seatNumber).toUpperCase() === normalizedSeatNumber
+        );
+
+        if (seat) {
+          seat.isBooked = false;
+        }
+      }
+
+      flight.availableSeats = flight.seats.filter((item) => !item.isBooked).length;
       await flight.save();
     }
 
@@ -208,6 +249,50 @@ await flight.save();
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Cancellation failed" });
+  }
+});
+router.get("/:flightId/seat/:seatNumber", async (req, res) => {
+  try {
+    const { flightId, seatNumber } = req.params;
+
+    const flight = await Flight.findById(flightId);
+
+    if (!flight)
+      return res.status(404).json({ message: "Flight not found" });
+
+    await ensureFlightSeats(flight);
+
+    const normalizedSeatNumber = String(seatNumber).toUpperCase();
+    const seat = flight.seats.find(
+      s => String(s.seatNumber).toUpperCase() === normalizedSeatNumber
+    );
+
+    if (!seat)
+      return res.status(404).json({ message: "Seat not found" });
+
+    res.json(seat);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching seat" });
+  }
+});
+
+/**
+ * GET FLIGHT BY ID (Keep this LAST)
+ */
+router.get("/:flightId", async (req, res) => {
+  try {
+    const flight = await Flight.findById(req.params.flightId);
+
+    if (!flight)
+      return res.status(404).json({ message: "Flight not found" });
+
+    res.json(flight);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch flight" });
   }
 });
 

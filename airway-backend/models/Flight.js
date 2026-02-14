@@ -8,13 +8,17 @@ const flightSchema = new mongoose.Schema({
   departureTime: Date,
   arrivalTime: Date,
   price: Number,
-  totalSeats: Number,
-  seats: [
-  {
-    seatNumber: String,
-    isBooked: { type: Boolean, default: false }
+  totalSeats: { type: Number, default: 40 },
+  availableSeats: { type: Number, default: 40 },
+  seats: {
+    type: [
+      {
+        seatNumber: String,
+        isBooked: { type: Boolean, default: false }
+      }
+    ],
+    default: []
   }
-]
 
 });
 

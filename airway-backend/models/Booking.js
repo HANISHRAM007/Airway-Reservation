@@ -19,7 +19,8 @@ const bookingSchema = new mongoose.Schema({
     {
       name: String,
       age: Number,
-      gender: String
+      gender: String,
+      seatNumber: String
     }
   ],
 
