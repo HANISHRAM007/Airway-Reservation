@@ -103,16 +103,40 @@ router.post("/pay/:bookingId", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "One or more flights not found" });
     }
 
-    for (const flight of flights) {
-      if (flight.availableSeats < booking.passengers.length) {
-        return res.status(400).json({
-          message: `Not enough seats in ${flight.airline}`
-        });
-      }
+    for (let flight of flights) {
+  for (let passenger of passengers) {
+
+    const seat = flight.seats.find(
+      s => s.seatNumber === passenger.seatNumber
+    );
+
+    if (!seat) {
+      return res.status(400).json({
+        message: `Seat ${passenger.seatNumber} not found in ${flight.airline}`
+      });
     }
 
+    if (seat.isBooked) {
+      return res.status(400).json({
+        message: `Seat ${passenger.seatNumber} already booked`
+      });
+    }
+  }
+}
+
+
     for (const flight of flights) {
-      flight.availableSeats -= booking.passengers.length;
+   for (let passenger of booking.passengers) {
+      const seat = flight.seats.find(
+        s => s.seatNumber === passenger.seatNumber
+      );
+
+      if (seat) {
+        seat.isBooked = true;
+      }
+    }
+    await flight.save();
+
       await flight.save();
     }
 
@@ -135,7 +159,57 @@ router.post("/pay/:bookingId", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Payment failed" });
   }
 });
+/**
+ * CANCEL BOOKING
+ */
+router.post("/cancel/:bookingId", authMiddleware, async (req, res) => {
+  try {
+    const booking = await Booking.findOne({
+      bookingId: req.params.bookingId,
+      userId: req.user.id
+    }).populate("flights");
 
+    if (!booking)
+      return res.status(404).json({ message: "Booking not found" });
+
+    if (booking.cancellationStatus === "CANCELLED")
+      return res.status(400).json({ message: "Already cancelled" });
+
+    if (booking.paymentStatus !== "SUCCESS")
+      return res.status(400).json({ message: "Payment not completed" });
+
+    // Restore seats
+    for (let flight of booking.flights) {
+     for (let passenger of booking.passengers) {
+  const seat = flight.seats.find(
+    s => s.seatNumber === passenger.seatNumber
+  );
+
+  if (seat) {
+    seat.isBooked = false;
+  }
+}
+await flight.save();
+
+      await flight.save();
+    }
+
+    booking.cancellationStatus = "CANCELLED";
+    booking.refundStatus = "REFUNDED";
+    booking.cancelledAt = new Date();
+
+    await booking.save();
+
+    res.json({
+      message: "Booking cancelled successfully",
+      refundStatus: booking.refundStatus
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Cancellation failed" });
+  }
+});
 
 
 module.exports = router;

@@ -28,6 +28,7 @@ const bookingSchema = new mongoose.Schema({
     enum: ["ONE_WAY", "ROUND_TRIP"],
     default: "ONE_WAY"
   },
+  
 
   totalAmount: Number,
 
@@ -36,8 +37,23 @@ const bookingSchema = new mongoose.Schema({
     enum: ["PENDING", "SUCCESS", "FAILED"],
     default: "PENDING"
   },
-
+  
   paymentId: String,
+
+  cancellationStatus: {
+  type: String,
+  enum: ["NONE", "CANCELLED"],
+  default: "NONE"
+},
+
+refundStatus: {
+  type: String,
+  enum: ["NOT_APPLICABLE", "INITIATED", "REFUNDED"],
+  default: "NOT_APPLICABLE"
+},
+
+cancelledAt: Date,
+
 
   bookingDate: { type: Date, default: Date.now }
 });

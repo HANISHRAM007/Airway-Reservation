@@ -9,7 +9,13 @@ const flightSchema = new mongoose.Schema({
   arrivalTime: Date,
   price: Number,
   totalSeats: Number,
-  availableSeats: Number
+  seats: [
+  {
+    seatNumber: String,
+    isBooked: { type: Boolean, default: false }
+  }
+]
+
 });
 
 module.exports = mongoose.model("Flight", flightSchema);
