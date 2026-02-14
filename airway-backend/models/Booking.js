@@ -8,10 +8,12 @@ const bookingSchema = new mongoose.Schema({
     ref: "User"
   },
 
-  flightId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Flight"
-  },
+  flights: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Flight"
+    }
+  ],
 
   passengers: [
     {
@@ -20,6 +22,12 @@ const bookingSchema = new mongoose.Schema({
       gender: String
     }
   ],
+
+  tripType: {
+    type: String,
+    enum: ["ONE_WAY", "ROUND_TRIP"],
+    default: "ONE_WAY"
+  },
 
   totalAmount: Number,
 
