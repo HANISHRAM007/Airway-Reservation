@@ -4,6 +4,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 const { buildSeatMap, ensureFlightSeats } = require("../utils/seatMap");
 
 const router = express.Router();
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Add Flight (Protected)
@@ -51,13 +53,35 @@ router.post("/add", authMiddleware, async (req, res) => {
  */
 router.get("/", async (req, res) => {
   try {
-    const { from, to } = req.query;
+    const { from, to, date, departureDate } = req.query;
     const query = {};
 
-    if (from) query.from = from;
-    if (to) query.to = to;
+    if (from) {
+      query.from = { $regex: `^${escapeRegex(from.trim())}$`, $options: "i" };
+    }
+    if (to) {
+      query.to = { $regex: `^${escapeRegex(to.trim())}$`, $options: "i" };
+    }
 
-    const flights = await Flight.find(query);
+    const requestedDate = date || departureDate;
+    if (requestedDate) {
+      const parsedDate = new Date(requestedDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date. Use YYYY-MM-DD" });
+      }
+
+      const startOfDay = new Date(parsedDate);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+      query.departureTime = {
+        $gte: startOfDay,
+        $lt: endOfDay
+      };
+    }
+
+    const flights = await Flight.find(query).sort({ departureTime: 1 });
     res.json(flights);
   } catch (err) {
     console.error(err);
@@ -70,12 +94,35 @@ router.get("/", async (req, res) => {
  */
 router.get("/search", async (req, res) => {
   try {
-    const { from, to } = req.query;
+    const { from, to, date, departureDate } = req.query;
+    const query = {};
 
-    const flights = await Flight.find({
-      from,
-      to
-    });
+    if (from) {
+      query.from = { $regex: `^${escapeRegex(from.trim())}$`, $options: "i" };
+    }
+    if (to) {
+      query.to = { $regex: `^${escapeRegex(to.trim())}$`, $options: "i" };
+    }
+
+    const requestedDate = date || departureDate;
+    if (requestedDate) {
+      const parsedDate = new Date(requestedDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date. Use YYYY-MM-DD" });
+      }
+
+      const startOfDay = new Date(parsedDate);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setUTCDate(endOfDay.getUTCDate() + 1);
+
+      query.departureTime = {
+        $gte: startOfDay,
+        $lt: endOfDay
+      };
+    }
+
+    const flights = await Flight.find(query).sort({ departureTime: 1 });
 
     res.json(flights);
   } catch (err) {

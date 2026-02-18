@@ -5,11 +5,21 @@ import { useNavigate } from "react-router-dom";
 function Search() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [date, setDate] = useState("");
   const [flights, setFlights] = useState([]);
   const navigate = useNavigate();
 
   const searchFlights = async () => {
-    const res = await axios.get(`/flight/search?from=${from}&to=${to}`);
+    const params = {
+      from: from.trim(),
+      to: to.trim()
+    };
+
+    if (date) {
+      params.date = date;
+    }
+
+    const res = await axios.get("/flight/search", { params });
     setFlights(res.data);
   };
 
@@ -19,6 +29,7 @@ function Search() {
 
       <input placeholder="From" onChange={(e) => setFrom(e.target.value)} />
       <input placeholder="To" onChange={(e) => setTo(e.target.value)} />
+      <input type="date" onChange={(e) => setDate(e.target.value)} />
 
       <button onClick={searchFlights}>Search</button>
 
