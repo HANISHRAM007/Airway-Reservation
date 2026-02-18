@@ -7,11 +7,12 @@ const authRoutes = require("./routes/auth");
 const flightRoutes = require("./routes/flight");
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-mongoose.connect("mongodb://127.0.0.1:27017/airway");
-
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 app.use("/api/auth", authRoutes);
 app.use("/api/flights", flightRoutes);
 app.use("/api/flight", flightRoutes);
