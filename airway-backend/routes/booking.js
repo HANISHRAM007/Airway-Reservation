@@ -185,9 +185,12 @@ router.post("/pay/:bookingId", authMiddleware, async (req, res) => {
     await sendTicketMail(user.email, booking.bookingId, fileName);
 
 
+    const baseUrl =
+      process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
     return res.json({
       message: "Payment successful",
-      ticketUrl: `http://localhost:5000/tickets/${fileName}`
+      ticketUrl: `${baseUrl}/tickets/${fileName}`
     });
 
   } catch (error) {
